@@ -1,0 +1,108 @@
+import pygame
+import random
+import sys
+
+# Initialize pygame
+pygame.init()
+
+# Screen dimensions
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("Car Racing Game")
+
+# Colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+
+# Clock for controlling frame rate
+clock = pygame.time.Clock()
+
+# Load assets
+car_width = 50
+car_height = 100
+car_image = pygame.Surface((car_width, car_height))
+car_image.fill(RED)
+
+# Game variables
+car_x = SCREEN_WIDTH // 2 - car_width // 2
+car_y = SCREEN_HEIGHT - car_height - 20
+car_speed = 5
+
+obstacle_width = 50
+obstacle_height = 100
+obstacle_speed = 5
+obstacles = []
+
+# Add initial obstacles
+for _ in range(3):
+    obstacles.append([random.randint(0, SCREEN_WIDTH - obstacle_width), -obstacle_height])
+
+score = 0
+
+def draw_obstacles():
+    for obs in obstacles:
+        pygame.draw.rect(screen, BLACK, (obs[0], obs[1], obstacle_width, obstacle_height))
+
+def move_obstacles():
+    global score
+    for obs in obstacles:
+        obs[1] += obstacle_speed
+        if obs[1] > SCREEN_HEIGHT:
+            obstacles.remove(obs)
+            obstacles.append([random.randint(0, SCREEN_WIDTH - obstacle_width), -obstacle_height])
+            score += 1
+
+def detect_collision():
+    car_rect = pygame.Rect(car_x, car_y, car_width, car_height)
+    for obs in obstacles:
+        obs_rect = pygame.Rect(obs[0], obs[1], obstacle_width, obstacle_height)
+        if car_rect.colliderect(obs_rect):
+            return True
+    return False
+
+# Game loop
+running = True
+while running:
+    screen.fill(WHITE)
+
+    # Event handling
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    # Get pressed keys
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT] and car_x > 0:
+        car_x -= car_speed
+    if keys[pygame.K_RIGHT] and car_x < SCREEN_WIDTH - car_width:
+        car_x += car_speed
+
+    # Move obstacles
+    move_obstacles()
+
+    # Draw car
+    screen.blit(car_image, (car_x, car_y))
+
+    # Draw obstacles
+    draw_obstacles()
+
+    # Check for collision
+    if detect_collision():
+        print(f"Game Over! Your Score: {score}")
+        pygame.quit()
+        sys.exit()
+
+    # Display score
+    font = pygame.font.Font(None, 36)
+    score_text = font.render(f"Score: {score}", True, BLACK)
+    screen.blit(score_text, (10, 10))
+
+    # Update the display
+    pygame.display.flip()
+
+    # Control frame rate
+    clock.tick(60)
+
+pygame.quit()
